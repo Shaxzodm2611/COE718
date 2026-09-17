@@ -53,3 +53,33 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# Keil uVision per-user settings
+*.uvoptx
+*.uvguix.*
+*.uvgui.*
+*.uvgui
+
+# Keil uVision build output directories
+Objects/
+Listings/
+
+# Keil compiler and linker output
+*.dep
+*.crf
+*.lnp
+*.lst
+*.axf
+*.bin
+
+# Keil-generated reports and logs
+*.build_log.htm
+JLinkLog.txt
+EventRecorderStub.scvd
+
+# Backup and temporary files
+*.bak
+*.orig
+*~
+.DS_Store
+Thumbs.db
