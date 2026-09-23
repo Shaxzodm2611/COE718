@@ -66,10 +66,12 @@ static void KBD_to_LED(uint32_t button){
 			break;
 		case KBD_SELECT:
 			LED_Out(0x1F);
+			break;
 		case 0:
 			LED_Out(0x00); // Pointless just 0x00
 	}
 }
+
 
 /*----------------------------------------------------------------------------
   Main Program
@@ -87,7 +89,7 @@ int main (void) {
 	
 	uint32_t current_button;
 	uint32_t prev_button = UINT32_MAX;
-	const char *joystick_dir_text;
+	unsigned char *joystick_dir_text;
 	/* LED Initialization            */
   //ADC_Initialize();                                /* ADC Initialization            */
 
@@ -97,13 +99,13 @@ int main (void) {
   GLCD_Clear(White);                         /* Clear graphical LCD display   */
   GLCD_SetBackColor(Blue);
   GLCD_SetTextColor(Yellow);
-  GLCD_DisplayString(0, 0, __FI, " COE718 Lab 1");
+  GLCD_DisplayString(0, 0, __FI, "    COE718 Lab 1    ");
 	GLCD_SetTextColor(White);
-  GLCD_DisplayString(1, 0, __FI, "  Shaxzod Mirkomilov ");
-  GLCD_DisplayString(2, 0, __FI, "  Demo ");
+  GLCD_DisplayString(1, 0, __FI, " Shaxzod Mirkomilov "); // Char[
+  GLCD_DisplayString(2, 0, __FI, "        Demo        ");
   GLCD_SetBackColor(White);
   GLCD_SetTextColor(Blue);
-	GLCD_DisplayString(6, 0, __FI, "Joystick not pressed");
+	GLCD_DisplayString(5, 0, __FI, "   JOYSTICK VAL:    ");
 #endif
 
   //SystemCoreClockUpdate();
@@ -134,6 +136,8 @@ int main (void) {
 						joystick_dir_text="SELECT";
 						KBD_to_LED(KBD_SELECT);
 						break;
+					case 0:
+						break;
 					default:
 						joystick_dir_text="NONE";
 						KBD_to_LED(0);
@@ -142,8 +146,8 @@ int main (void) {
 				#ifdef __USE_LCD
 					GLCD_SetBackColor(White);
 					GLCD_SetTextColor(Red);
-					GLCD_DisplayString(6,10,__FI, "           ");
-					GLCD_DisplayString(7,10, __FI, (unsigned char *)joystick_dir_text);
+					GLCD_DisplayString(7,7,__FI, "           "); // Clears joystick param
+					GLCD_DisplayString(7,7, __FI, joystick_dir_text);
 				#endif
 			}
 			if (clock_ms) {
