@@ -36,7 +36,8 @@ void SysTick_Handler (void) {
   }
 
   /* Blink the LEDs depending on ADC_ConvertedValue                           */
-  if (timetick++ >= (ADC_last >> 8)) {
+  /**
+	if (timetick++ >= (ADC_last >> 8)) {
     timetick   = 0;
     leds     <<= 1;
     if (leds > (1 << LED_NUM)) leds = 0x01;
@@ -44,4 +45,5 @@ void SysTick_Handler (void) {
   }
 
   ADC_StartConversion();
+**/
 }
