@@ -32,10 +32,12 @@ int fputc(int ch, FILE *f) {
 #define LED_A_DIRECT (*(volatile unsigned long *)0x233806F0)
 #define LED_B_DIRECT (*(volatile unsigned long *) 0x23380A88)
 
-// Demo features are disabled during performance analysis.
-// Set to 1 for the target-board demo with LCD output and one-second delays.
-
+// Toggle Demo Features (Delay, LCD, etc)
 #define TOGGLE_DEMO 0
+
+// Use different API (i.e. GLCD_DrawString takes in pixel params per [3], the conversion is:
+// x = column * 28
+// y = line * 24
 
 #if TOGGLE_DEMO
 volatile uint32_t msTicks = 0;
@@ -79,16 +81,41 @@ static void lcd_show_status(const char *method, const char *state) {
 	GLCD_DrawString(0, 168, "                    ");
 	GLCD_DrawString(0, 168, state);
 }
+
+static void lcd_show_barrel(uint32_t pos){
+	char line[21];
+	
+	pos = pos & 1;
+	
+	GLCD_SetForegroundColor(GLCD_COLOR_RED);
+	GLCD_DrawString(0, 96, "                    ");
+	GLCD_DrawString(0, 96, "Barrel Shift LED");
+	
+	snprintf(line, sizeof(line), "%u ^ 1 = %u",
+	         (unsigned int)pos, (unsigned int)(pos ^ 1));
+	GLCD_DrawString(0, 120, "                    ");
+	GLCD_DrawString(0, 120, line);
+	
+	GLCD_DrawString(0,144,"                    ");
+	GLCD_DrawString(0, 144, (pos ^ 1) ? "LED0: ON" : "LED0: OFF");
+	
+	GLCD_DrawString(0, 168,"                    ");
+	GLCD_DrawString(0, 168, pos ? "LED3: ON" : "LED3: OFF");
+}
+
+
 #endif
 
 #if TOGGLE_DEMO
 	#define DEMO_DELAY() delay(1)
 	#define DEMO_LCD_INIT() lcd_initialize()
 	#define DEMO_LCD_STATUS(method, state) lcd_show_status(method, state)
+	#define DEMO_LCD_BARREL(pos) lcd_show_barrel(pos)
 #else
 	#define DEMO_DELAY() ((void)0)
 	#define DEMO_LCD_INIT() ((void)0)
 	#define DEMO_LCD_STATUS(method, state) ((void)0)
+	#define DEMO_LCD_BARREL(pos) ((void)(pos))
 #endif
 
 
@@ -96,6 +123,7 @@ static void lcd_show_status(const char *method, const char *state) {
 #define ADDRESS(x)    (*((volatile unsigned long *)(x)))
 #define BitBand(x, y) 	ADDRESS(((unsigned long)(x) & 0xF0000000) | 0x02000000 |(((unsigned long)(x) & 0x000FFFFF) << 5) | ((y) << 2))
 
+// NEED TO ADD THIS TO HAVE COMPILER NOT OPTIMIZE AWAY CONDITIONAL
 // Methods for LED Operation
 __attribute__((noinline))
 static void leds_mask(volatile uint32_t on){
@@ -109,7 +137,7 @@ static void leds_mask(volatile uint32_t on){
 	LPC_GPIO2->FIOPIN = (LPC_GPIO2->FIOPIN & ~LED_B_MASK) | (value << 2);
 }
 
-// NEED TO ADD THIS TO HAVE COMPILER NOT OPTIMIZE AWAY CONDITIONAL
+
 __attribute__((noinline))
 static void leds_bitband_func(volatile uint32_t on){
 	int value;
@@ -135,10 +163,33 @@ static void leds_bitband_direct(volatile uint32_t on){
 	LED_B_DIRECT = value;
 }
 
+// Barrel Shifting Method
+
+/*
+* This method simply toggles between LED 0 and 1. Instead of simpling turning the bits on/off, it looks at the previous
+* position of the opposite lED. This was done to incorporate the barrel shifting operations
+*/
+
+__attribute__((noinline))
+static void leds_barrel(uint32_t pos){
+	uint32_t led0_on;
+	uint32_t led3_on;
+	
+	pos = pos & 1;
+	
+	led0_on = pos^1;
+	led3_on = pos;
+	
+	LPC_GPIO1->FIOPIN=(LPC_GPIO1->FIOPIN & ~LED_A_MASK) | (led0_on << 28);
+	LPC_GPIO2->FIOPIN=(LPC_GPIO2->FIOPIN & ~LED_B_MASK) | (led3_on << 2);
+}
+
+
 int main(void){
 	LED_Initialize();
 	SystemInit();	
 	DEMO_LCD_INIT();
+	uint32_t pos;
 	
 	
 	#if TOGGLE_DEMO
@@ -171,6 +222,14 @@ int main(void){
 		DEMO_LCD_STATUS("Direct bit band", "OFF");
 		leds_bitband_direct(0);
 		DEMO_DELAY();
+		
+		// Barrel Shifting
+		for(pos=0; pos<2; pos++){
+			leds_barrel(pos);
+			DEMO_LCD_BARREL(pos);
+			DEMO_DELAY();
+		}
+		
 	#if TOGGLE_DEMO
 		}
 	#endif
