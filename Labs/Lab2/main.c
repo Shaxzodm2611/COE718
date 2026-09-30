@@ -33,7 +33,7 @@ int fputc(int ch, FILE *f) {
 #define LED_B_DIRECT (*(volatile unsigned long *) 0x23380A88)
 
 // Toggle Demo Features (Delay, LCD, etc)
-#define TOGGLE_DEMO 0
+#define TOGGLE_DEMO 1
 
 // Use different API (i.e. GLCD_DrawString takes in pixel params per [3], the conversion is:
 // x = column * 28
@@ -76,8 +76,10 @@ static void lcd_initialize(void) {
 
 static void lcd_show_status(const char *method, const char *state) {
 	GLCD_SetForegroundColor(GLCD_COLOR_RED);
+	GLCD_DrawString(0, 96,  "                    ");
 	GLCD_DrawString(0, 120, "                    ");
 	GLCD_DrawString(0, 120, method);
+	GLCD_DrawString(0, 144, "                    ");
 	GLCD_DrawString(0, 168, "                    ");
 	GLCD_DrawString(0, 168, state);
 }
@@ -87,7 +89,7 @@ static void lcd_show_barrel(uint32_t pos){
 	
 	pos = pos & 1;
 	
-	GLCD_SetForegroundColor(GLCD_COLOR_RED);
+	GLCD_SetForegroundColor(GLCD_COLOR_BLUE);
 	GLCD_DrawString(0, 96, "                    ");
 	GLCD_DrawString(0, 96, "Barrel Shift LED");
 	
@@ -95,7 +97,7 @@ static void lcd_show_barrel(uint32_t pos){
 	         (unsigned int)pos, (unsigned int)(pos ^ 1));
 	GLCD_DrawString(0, 120, "                    ");
 	GLCD_DrawString(0, 120, line);
-	
+	GLCD_SetForegroundColor(GLCD_COLOR_RED);
 	GLCD_DrawString(0,144,"                    ");
 	GLCD_DrawString(0, 144, (pos ^ 1) ? "LED0: ON" : "LED0: OFF");
 	
@@ -107,7 +109,7 @@ static void lcd_show_barrel(uint32_t pos){
 #endif
 
 #if TOGGLE_DEMO
-	#define DEMO_DELAY() delay(1)
+	#define DEMO_DELAY() delay(3)
 	#define DEMO_LCD_INIT() lcd_initialize()
 	#define DEMO_LCD_STATUS(method, state) lcd_show_status(method, state)
 	#define DEMO_LCD_BARREL(pos) lcd_show_barrel(pos)
